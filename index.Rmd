@@ -1,30 +1,66 @@
 ---
 title: "Cecilia's Portfolio 2025"
-author: "Cecilia Boeren"
-date: "2025-02-21"
-output: html_document
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+    theme: "journal"
 ---
+
+### Introduction
+
+```{r}
+```
+
+***
+
+Hello everyone, and welcome to my Portfolio page! This is the first time coding for me, and I've been sick all week and missing both the lecture and the workgroup, so I think I know what I'm doing, but not entirely sure... Feedback is very welcome :) 
+
+For the homework assignment of last week I had to create two tracks. I made them through a generative AI program called 'Stable Audio'. I wanted to make two completely different tracks.
+
+Track 1: for this track I wanted to go for a relaxing vibe. I used the prompts ukulele, beach vibes, relax, 80 BPM, high-hat, danceable, cool, build-up and ukulele solo. The result was kind of what I expected: relaxing, summer vibes with a piña colada, lying down on the beach on holiday. The tempo is kind of slow, there are many consonant harmonies, gentle strumming patterns and it's quite minimalistic.
+
+Track 2: this track is a bit more outgoing than the first one. I wanted to make a tune that you'll hear in the club and dance to. Therefor I used the prompts techno club, classical violin, piano chords, cool, groovy, 100 BPM, danceable, high-hat, build-up and heavy beatdrop. As you can see I also used classical music prompts. I like to experiment with 'modern' genres and classical music because I think they make an excellent combination. On this one I think the danceability, energy and instrumentalness pop out the most.
+
+### Visualization
+
+```{r}
+ library(ggplot2)
+library(plotly)
+
+data <- read.csv("aisc2024.csv")
+
+tempo_danceability_gg <- ggplot(data, aes(x = tempo, y = danceability, size = instrumentalness, color = instrumentalness)) +
+    geom_point(alpha = 0.6) + 
+    labs(title = "Tempo vs Danceability", 
+         x = "Tempo (BPM)", y = "Danceability", size = "Instrumentalness", color = "Instrumentalness") +
+    scale_color_viridis_c() +  
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(tempo_danceability_gg)
+
+```
+
+***
+
+For this week, we were supposed to use the "compmus2025.csv" file to explore them, but I didn't manage to get the file working: it kept saying that the whole document was one column, so I couldn't examine all the separate musical characteristics. 
+
+Ashley said it was also okay to use the "aisc2024.csv" file this week, so that's what I've done. I've looked at all the different features and found especially the tempo and danceability interesting to look at. These are also features where I focused on in my second track. As you can see in the interactive(!) graph, you have tracks with 60 BPM with a high danceability, but also tracks with a BPM of over 150 and a very low danceability. I presumed beforehand that the tracks with a low BPM were not as danceable as the ones with a higher one, so I found this very interesting. 
+
+
+### Discussion
+
+```{r}
+```
+
+***
+
+As I said in the visualization, I couldn't use the new file with the Essentia features, so I couldn't see if Essentia characterized my tracks correctly. I hope that it will work next week and I can analyze my own tracks! :)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(plotly)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
