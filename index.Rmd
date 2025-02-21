@@ -1,7 +1,7 @@
 ---
-title: "computational musicology"
+title: "CB's Portfolio 2025"
 author: "Cecilia Boeren"
-date: "2025-02-12"
+date: "2025-02-21"
 output: html_document
 ---
 
