@@ -6,6 +6,15 @@ output:
     theme: "journal"
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(ggplot2)
+library(rjson) 
+library(plotly)
+source("compmus.R")
+```
+
 ### Introduction
 
 ```{r}
@@ -21,7 +30,7 @@ Track 1: for this track I wanted to go for a relaxing vibe. I used the prompts u
 
 Track 2: this track is a bit more outgoing than the first one. I wanted to make a tune that you'll hear in the club and dance to. Therefor I used the prompts techno club, classical violin, piano chords, cool, groovy, 100 BPM, danceable, high-hat, build-up and heavy beatdrop. As you can see I also used classical music prompts. I like to experiment with 'modern' genres and classical music because I think they make an excellent combination. On this one I think the danceability, energy and instrumentalness pop out the most.
 
-### Visualization
+### Visualization week 9
 
 ```{r}
  library(ggplot2)
@@ -41,6 +50,7 @@ ggplotly(tempo_danceability_gg)
 
 ```
 
+
 ***
 
 For this week, we were supposed to use the "compmus2025.csv" file to explore them, but I didn't manage to get the file working: it kept saying that the whole document was one column, so I couldn't examine all the separate musical characteristics. 
@@ -57,10 +67,151 @@ Ashley said it was also okay to use the "aisc2024.csv" file this week, so that's
 
 As I said in the visualization, I couldn't use the new file with the Essentia features, so I couldn't see if Essentia characterized my tracks correctly. I hope that it will work next week and I can analyze my own tracks! :)
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+### Chromagram Analysis
 
-library(plotly)
+#### Chromagram Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>                           
+          compmus_chroma(norm = "identity") |>                 
+          ggplot(aes(x = time, y = pc, fill = value)) + 
+          geom_raster() +
+          scale_y_continuous(
+                  breaks = 0:11,
+                  minor_breaks = NULL,
+                  labels = c(
+                          "C", "C#|Db", "D", "D#|Eb",
+                          "E", "F", "F#|Gb", "G",
+                          "G#|Ab", "A", "A#|Bb", "B"
+                      )
+              ) +
+          scale_fill_viridis_c(guide = "none") +               
+          labs(x = "Time (s)", y = NULL, fill = NULL) +
+          theme_light() 
 ```
 
+#### Chromagram Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>                           
+          compmus_chroma(norm = "identity") |>                 
+          ggplot(aes(x = time, y = pc, fill = value)) + 
+          geom_raster() +
+          scale_y_continuous(
+                  breaks = 0:11,
+                  minor_breaks = NULL,
+                  labels = c(
+                          "C", "C#|Db", "D", "D#|Eb",
+                          "E", "F", "F#|Gb", "G",
+                          "G#|Ab", "A", "A#|Bb", "B"
+                      )
+              ) +
+          scale_fill_viridis_c(guide = "none") +               
+          labs(x = "Time (s)", y = NULL, fill = NULL) +
+          theme_light() 
+```
+
+***
+
+### Cepstrogram Analysis
+
+#### Ceptogram Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>                           
+    compmus_mfccs(norm = "identity") |>                  
+    ggplot(aes(x = time, y = mfcc, fill = value)) + 
+    geom_raster() +
+    scale_y_continuous(
+        breaks = 0:12,
+        minor_breaks = NULL,
+    ) +
+    scale_fill_viridis_c(option = "plasma", guide = "none") +
+    labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+    theme_light() 
+```
+
+#### Ceptogram Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>                           
+    compmus_mfccs(norm = "identity") |>                  
+    ggplot(aes(x = time, y = mfcc, fill = value)) + 
+    geom_raster() +
+    scale_y_continuous(
+        breaks = 0:12,
+        minor_breaks = NULL,
+    ) +
+    scale_fill_viridis_c(option = "plasma", guide = "none") +
+    labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+    theme_light() 
+```
+
+### Self-similarity Matrices Track 1
+
+#### Chroma-based self-similarity matrix track 1
+
+```{r}
+"features/cecilia-b-1.json" |>                           
+     compmus_chroma(norm = "manhattan") |>                 
+     compmus_self_similarity(
+         feature = pc,
+         distance = "manhattan"                             
+     ) |>   
+     ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+     geom_raster() +
+     scale_fill_gradient(low = "purple", high = "pink") +               
+     labs(x = "Time (s)", y = NULL, fill = NULL) +
+     theme_light() 
+```
+
+#### Timbre-based self-similarity matrix track 1
+
+```{r}
+"features/cecilia-b-1.json" |>                           
+     compmus_mfccs(norm = "identity") |>                  
+     compmus_self_similarity(
+         feature = mfcc,
+         distance = "euclidean"                             
+     ) |>   
+     ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+     geom_raster() +
+     scale_fill_gradient(low = "#FF69B4", high = "#FFD700") +               
+     labs(x = "Time (s)", y = NULL, fill = NULL) +
+     theme_light()
+```
+
+### Self-similarity Matrices Track 2
+
+#### Chroma-based self-similarity matrix track 2
+
+```{r}
+"features/cecilia-b-2.json" |>                           
+     compmus_chroma(norm = "manhattan") |>                 
+     compmus_self_similarity(
+         feature = pc,
+         distance = "manhattan"                             
+     ) |>   
+     ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+     geom_raster() +
+     scale_fill_gradient(low = "purple", high = "pink") +               
+     labs(x = "Time (s)", y = NULL, fill = NULL) +
+     theme_light() 
+```
+
+#### Timbre-based self-similarity matrix track 2
+
+```{r}
+"features/cecilia-b-2.json" |>                           
+     compmus_mfccs(norm = "identity") |>                  
+     compmus_self_similarity(
+         feature = mfcc,
+         distance = "euclidean"                             
+     ) |>   
+     ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+     geom_raster() +
+     scale_fill_gradient(low = "#FF69B4", high = "#FFD700") +               
+     labs(x = "Time (s)", y = NULL, fill = NULL) +
+     theme_light()
+```
 
