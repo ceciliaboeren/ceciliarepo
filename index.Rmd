@@ -90,6 +90,14 @@ As I said in the visualization, I couldn't use the new file with the Essentia fe
           theme_light() 
 ```
 
+***
+
+Figure: Chromagram of Cecilia B-1
+
+This chromagram visualizes the pitch class distribution over time for my first track. The x-axis represents time in seconds, while the y-axis corresponds to the 12 pitch classes (C to B), including enharmonic equivalents (e.g., C#|Db). The color intensity indicates the strength of each pitch class at a given moment, with brighter areas representing stronger presence. This visualization helps analyze harmonic content, tonality, and key changes throughout the track.
+
+(I still want to analyze it further but ran out of time for now)
+
 #### Chromagram Track 2
 
 ```{r}
@@ -113,9 +121,15 @@ As I said in the visualization, I couldn't use the new file with the Essentia fe
 
 ***
 
+Figure: Chromagram of Cecilia B-2
+
+This chromagram represents the pitch class distribution over time for my second track. The x-axis shows time in seconds, while the y-axis corresponds to the 12 pitch classes (C to B), including enharmonic equivalents. 
+
+(I still want to analyze it further, and compare both chromagrams but ran out of time for now)
+
 ### Cepstrogram Analysis
 
-#### Ceptogram Track 1
+#### Cepstrogram Track 1
 
 ```{r}
 "features/cecilia-b-1.json" |>                           
@@ -131,7 +145,13 @@ As I said in the visualization, I couldn't use the new file with the Essentia fe
     theme_light() 
 ```
 
-#### Ceptogram Track 2
+***
+
+Figure: Cepstrogram of Cecilia B-1
+
+This cepstrogram visualizes the evolution of Mel-Frequency Cepstral Coefficients (MFCCs) over time for my first track. The x-axis represents time in seconds, while the y-axis indicates the MFCC coefficient number, which captures different aspects of the spectral envelope. The color intensity (using the plasma color scale) shows the strength of each coefficient at a given moment, with brighter colors representing higher magnitudes. MFCCs are commonly used for timbre analysis, making this plot useful for understanding tonal quality, texture, and distinguishing different sound characteristics within the track.
+
+#### Cepstrogram Track 2
 
 ```{r}
 "features/cecilia-b-2.json" |>                           
@@ -146,6 +166,14 @@ As I said in the visualization, I couldn't use the new file with the Essentia fe
     labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
     theme_light() 
 ```
+
+***
+
+Figure: Cepstrogram of Cecilia B-2
+
+This cepstrogram displays the progression of Mel-Frequency Cepstral Coefficients (MFCCs) over time for my second track.
+
+(I still want to analyze it further, and compare both cepstrograms but ran out of time for now)
 
 ### Self-similarity Matrices Track 1
 
@@ -165,6 +193,10 @@ As I said in the visualization, I couldn't use the new file with the Essentia fe
      theme_light() 
 ```
 
+***
+
+This visualization helps analyze harmonic consistency and motif recurrence within the track.
+
 #### Timbre-based self-similarity matrix track 1
 
 ```{r}
@@ -180,6 +212,10 @@ As I said in the visualization, I couldn't use the new file with the Essentia fe
      labs(x = "Time (s)", y = NULL, fill = NULL) +
      theme_light()
 ```
+
+*** 
+
+This timbre-based self-similarity matrix (SSM) uses Mel-Frequency Cepstral Coefficients (MFCCs) to measure the similarity in timbre across different points in my first track. The x- and y-axes represent time, while the color gradient illustrates the degree of similarity—brighter regions indicate similar timbral qualities between different sections. Unlike the chroma-based matrix, this SSM captures changes in texture, instrumentation, and dynamics, making it useful for identifying shifts in sound color rather than harmonic structure.
 
 ### Self-similarity Matrices Track 2
 
