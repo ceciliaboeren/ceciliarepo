@@ -15,6 +15,98 @@ library(plotly)
 source("compmus.R")
 ```
 
+### Tempograms week 11
+
+#### Tempogram Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>
+    compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+    ggplot(aes(x = time, y = bpm, fill = power)) +
+    geom_raster() +
+    scale_fill_viridis_c(guide = "none") +
+    labs(x = "Time (s)", y = "Tempo (BPM)") +
+    theme_light()
+```
+
+***
+This graph of my first track shows how the speed of the music changes over time. Most of the time, the tempo stays steady at around 200 BPM and 400 BPM, shown by the bright, straight lines. At the beginning and end, the lines look more wavy, which means the tempo is changing or the rhythm is less steady in those parts. This happened in this song because it has a small intro that gradually settles into a steady beat and a tempo shift near the end.
+
+#### Tempogram Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>
+    compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+    ggplot(aes(x = time, y = bpm, fill = power)) +
+    geom_raster() +
+    scale_fill_viridis_c(guide = "none") +
+    labs(x = "Time (s)", y = "Tempo (BPM)") +
+    theme_classic()
+```
+
+***
+This graph of my second track shows how the tempo changes over time. The bright lines staying in the same place mean the tempo is very steady, around 200 BPM, 400 BPM, and 600 BPM. This suggests the music has a strong, consistent beat without big changes, which is common in electronic or dance music, and my goal was to make a 'dance music' track. The beat stays the same throughout the track.
+
+### Novelty Function: Energy
+
+#### Energy Novelty Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>
+    compmus_energy_novelty() |> 
+    ggplot(aes(t, novelty)) +
+    geom_line() +
+    theme_minimal() +
+    labs(x = "Time (s)", y = "Energy Novelty")
+```
+
+***
+As you can see, this track doesn't have a lot of energy whatsoever. This track contains chill, relaxing ukulele music so 'low energy' was also my goal. It is kind of boring and as you can see, there's no energy to be found!
+
+#### Energy Novelty Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>
+    compmus_energy_novelty() |> 
+    ggplot(aes(t, novelty)) +
+    geom_line() +
+    theme_minimal() +
+    labs(x = "Time (s)", y = "Energy Novelty")
+```
+
+***
+My second track is a bit more energetic compared to my first one, but less than I imagined. You can clearly see the 'beat-drop' 20 seconds into the track, but afterwards there is also hardly any energy in this track
+
+### Novelty function: spectral
+
+#### Spectral Novelty Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>
+    compmus_spectral_novelty() |> 
+    ggplot(aes(t, novelty)) +
+    geom_line() +
+    theme_minimal() +
+    labs(x = "Time (s)", y = "Spectral Novelty")
+```
+
+***
+If you look at this graph of my first track, you can see that it's almost completely the same during the whole song. 
+
+#### Spectral Novelty Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>
+    compmus_spectral_novelty() |> 
+    ggplot(aes(t, novelty)) +
+    geom_line() +
+    theme_minimal() +
+    labs(x = "Time (s)", y = "Spectral Novelty")
+```
+
+***
+Here you can see the beat drop that happens around 20 seconds into the track. There is an enormous shift in the graph, and after 50 seconds or so it calms down again.
+
 ### Chordogram week 10
 
 #### Chordogram Track 1
@@ -104,7 +196,7 @@ key_templates <-
 ```
 
 
-```{r, fig.show='hold', out.width="50%"}
+```{r}
 "features/cecilia-b-1.json" |> 
   compmus_chroma(norm = "manhattan") |> 
   compmus_match_pitch_templates(
