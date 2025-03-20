@@ -163,7 +163,16 @@ classification_knn |> get_conf_mat() |> autoplot(type = "mosaic")
 
 ***
 
-I'm not really sure how I'm supposed to read this...
+This shows how well AI-generated and human-created music based on their characteristics. 
+
+Ik we break it down:
+- Top-left block: AI predicted as AI
+- Bottom-right block: Non-AI predicted as non-AI
+- Top-right block: Non-AI incorrectly predicted as AI
+- Bottom-left block: AI incorrectly as Non-AI
+
+As you can see, the classification was mostly accurate, because the top-left and right-bottom are the biggest blocks, but there were also some songs classified incorrectly. 
+
 
 ```{r}
 classification_knn |> get_conf_mat() |> autoplot(type = "heatmap")
@@ -214,6 +223,11 @@ compmus2025_filtered |>
   )
 ```
 
+***
+
+This graph is based on our class corpus. Each dot represents a song, purple = AI, yellow = non AI. The size of the dots are BPM. 
+
+What we can make out of this graph is that AI-generated songs form a bit of a cluster, whereas the non-AI songs show a wider range of moods. AI seems to follow established musical patterns, but might lack the emotional extremes often found in human-made music.
 
 
 ### Tempograms week 11
