@@ -2,8 +2,10 @@
 title: "Cecilia's Portfolio 2025"
 output: 
   flexdashboard::flex_dashboard:
+    orientation: columns
     storyboard: true
     theme: "journal"
+  runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
@@ -26,305 +28,211 @@ library(heatmaply)
 
 Welcome :)
 
+Background
+===================================== 
 
-### Comparing dendrograms of class corpus week 12
+Column {data-width=500}
+-----------------------------------------------------------------------
+### My submitted tracks
 
-#### Dendrogram with all features
+<h5>Track 1: Happy Beach</h3>
+  <audio controls>
+    <source src="cecilia-b-1.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
 
-*** 
+<hr>
 
-So for this assignment I decided to compare two dendrograms of the class corpus. The first one is with all the features (arousal, danceability, instrumentalness, tempo and valence), as for the second only has arousal and valence. My prediction is that if you get rid of some of the features, the song will become less different. Lets find out!
+<h5>Track 2: Messy Mind</h3>
+  <audio controls>
+    <source src="cecilia-b-2.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+
+Column {.tabset}
+-----------------------------------------------------------------------
+### About the tracks
+
+For this portfolio I decided to make two generative AI tracks through a program called 'Stable Audio'. My goal was to make them completely different:
+
+**Track 1:** for this track I wanted to go for a relaxing vibe. I used the prompts ukulele, beach vibes, relax, 80 BPM, high-hat, danceable, cool, build-up and ukulele solo. The result was kind of what I expected: relaxing, summer vibes with a piña colada, lying down on the beach on holiday. The tempo is kind of slow, there are many consonant harmonies, gentle strumming patterns and it's quite minimalistic.
+
+**Track 2, Messy Mind:** this track is a bit more outgoing than the first one. I wanted to make a tune that you'll hear in the club and dance to. Therefor I used the prompts techno club, classical violin, piano chords, cool, groovy, 100 BPM, danceable, high-hat, build-up and heavy beatdrop. As you can see I also used classical music prompts. I like to experiment with 'modern' genres and classical music because I think they make an excellent combination. On this one I think the danceability, energy and instrumentalness pop out the most. I named this track 'Messy Mind' because it sounds really chaotic, and that's how I feel like that during an exam week ;)
+
+Track level features
+===================================== 
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+### Class corpus
 
 ```{r}
-compmus2025 <- read.csv("compmus2025 (2).csv")
+library(tidyverse)
+
+df <- read.csv("compmus2025.csv", sep=";", stringsAsFactors=FALSE)
+
+library(DT)
+
+datatable(df, options = list(pageLength = 25, scrollX = TRUE))
 
 ```
+Column {.tabset}
+-----------------------------------------------------------------------
+### Features correlation of class corpus
 
 ```{r}
-source("compmus.R")
+library(ggplot2)
+library(corrplot)
+library(reshape2)
 
-get_conf_mat <- function(fit) {
-  outcome <- .get_tune_outcome_names(fit)
-  fit |> 
-    collect_predictions() |> 
-    conf_mat(truth = outcome, estimate = .pred_class)
-}  
+numeric_df <- df[sapply(df, is.numeric)]  
 
-get_pr <- function(fit) {
-  fit |> 
-    conf_mat_resampled() |> 
-    group_by(Prediction) |> mutate(precision = Freq / sum(Freq)) |> 
-    group_by(Truth) |> mutate(recall = Freq / sum(Freq)) |> 
-    ungroup() |> filter(Prediction == Truth) |> 
-    select(class = Prediction, precision, recall)
-}  
+correlation_matrix <- cor(numeric_df, use = "complete.obs")
+
+correlation_data <- melt(correlation_matrix)
+invisible(head(correlation_data))  
+
+ggplot(correlation_data, aes(x = Var1, y = Var2, fill = value)) + 
+  geom_tile() + 
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  labs(title = "Correlations Heatmap", x = "Features", y = "Features") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+### Correlations heatmap explanation
+
+In this graph, we can see the correlation between the seven different features of this class corpus. On the diagonal column, all features are 1.00, because the correlation between two of the same variables always has to be 1.00. What also sticks out is the dark purple blocks. These are the correlations between instrumentalness and arousal. They have the weakest correlarion score of under -0.50. Arousal and valence have the strongest correlation with a score of about 0.50. The strong positive correlation between arousal and valence suggests that as a song becomes more arousing, it also tends to be more positive, while the negative correlation between instrumentalness and arousal indicates that instrumental tracks are generally less arousing.
+
+### My tracks vs. the class corpus
 ```{r}
-cluster_juice <-
-  recipe(
-    filename ~
-      arousal +
-      danceability +
-      instrumentalness +
-      tempo +
-      valence,
-    data = compmus2025
-  ) |>
-  step_center(all_predictors()) |>
-  step_scale(all_predictors()) |> 
-  # step_range(all_predictors()) |> 
-  prep(compmus2025) |>
-  juice() |>
-  column_to_rownames("filename")
+library(ggplot2)
 
-compmus_dist <- dist(cluster_juice, method = "euclidean")
+df$IsMine <- grepl("cecilia-b-", df$filename)
 
-compmus_dist |> 
-  hclust(method = "average") |>
-  dendro_data() |> 
-  ggdendrogram() + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 5))
+avg_danceability_all <- mean(df$danceability)
+
+ggplot(df, aes(x = danceability, fill = IsMine)) +
+  geom_histogram(bins = 20, alpha = 0.6, position = "identity") +
+  scale_fill_manual(values = c("gray", "red"), labels = c("Other tracks", "My tracks")) +
+  labs(title = "Comparison of danceability: my tracks vs. class corpus",
+       fill = "Track Type", y = "Track count") +
+  geom_vline(aes(xintercept = avg_danceability_all), color = "blue", linetype = "dashed", size = 1) + 
+  theme_minimal() +
+  annotate("text", x = avg_danceability_all, y = 5, label = paste("Mean: ", round(avg_danceability_all, 2)), color = "blue")
 ```
 
-#### Dendrogram with only arousal and valence
+### Explanation of the histogram
 
+This histogram visualizes the tempo distribution of my tracks compared to the full class corpus. The gray bars represent the number of tracks in different tempo ranges within the class dataset, while my tracks are highlighted in red. This allows me to see how my tempo choices align with or differ from the overall trends in the dataset. The class corpus has a wide range of tempos, with peaks around 100 BPM and 150 BPM, suggesting these are common tempo choices. My tracks are around 75 and 100 BPM, what means that one of my songs is quite a bit slower than average.
+
+### Tempo vs. danceability
 ```{r}
-cluster_juice <-
-  recipe(
-    filename ~
-      arousal +
-      valence,
-    data = compmus2025
-  ) |>
-  step_center(all_predictors()) |>
-  step_scale(all_predictors()) |> 
-  # step_range(all_predictors()) |> 
-  prep(compmus2025) |>
-  juice() |>
-  column_to_rownames("filename")
+ library(ggplot2)
+library(plotly)
 
-compmus_dist <- dist(cluster_juice, method = "euclidean")
+data <- read.csv("compmus2025.csv", stringsAsFactors = FALSE)
 
-compmus_dist |> 
-  hclust(method = "average") |>
-  dendro_data() |> 
-  ggdendrogram() + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 5))
-```
-
-***
-
-As you can see, the dendrograms look different. In the first one, the y-axis counts till 4 (and even over 4), as in the second one it doesn't get much higher than two. The tracks are still all very different compared to eachother, but my hypothesis was right that they are a bit more similar compared to if you use all the features
-
-### AI or non AI?
-
-#### Prediction
-
-***
-
-Here we're going to look at the prediction. Does the computer think the tracks are AI or non AI? 
-
-```{r}
-compmus2025_filtered <- 
-  compmus2025 |> filter(!is.na(ai)) |> 
-  mutate(ai = factor(if_else(ai, "AI", "Non-AI")))
-
-classification_recipe <-
-  recipe(
-    ai ~
-      arousal +
-      danceability +
-      instrumentalness +
-      tempo +
-      valence,
-    data = compmus2025_filtered
-  ) |>
-  step_center(all_predictors()) |>
-  step_scale(all_predictors())     
-
-compmus_cv <- compmus2025_filtered |> vfold_cv(5)
-
-knn_model <-
-  nearest_neighbor(neighbors = 1) |>
-  set_mode("classification") |> 
-  set_engine("kknn")
-classification_knn <- 
-  workflow() |> 
-  add_recipe(classification_recipe) |> 
-  add_model(knn_model) |> 
-  fit_resamples(compmus_cv, control = control_resamples(save_pred = TRUE))
-
-classification_knn |> get_conf_mat()
-```
-```{r}
-classification_knn |> get_conf_mat() |> autoplot(type = "mosaic")
-```
-
-***
-
-This shows how well AI-generated and human-created music based on their characteristics. 
-
-Ik we break it down:
-- Top-left block: AI predicted as AI
-- Bottom-right block: Non-AI predicted as non-AI
-- Top-right block: Non-AI incorrectly predicted as AI
-- Bottom-left block: AI incorrectly as Non-AI
-
-As you can see, the classification was mostly accurate, because the top-left and right-bottom are the biggest blocks, but there were also some songs classified incorrectly. 
-
-
-```{r}
-classification_knn |> get_conf_mat() |> autoplot(type = "heatmap")
-```
-
-#### Forest-model
-
-```{r}
-forest_model <-
-  rand_forest() |>
-  set_mode("classification") |> 
-  set_engine("ranger", importance = "impurity")
-indie_forest <- 
-  workflow() |> 
-  add_recipe(classification_recipe) |> 
-  add_model(forest_model) |> 
-  fit_resamples(
-    compmus_cv, 
-    control = control_resamples(save_pred = TRUE)
-  )
-
-indie_forest |> get_pr()
-
-workflow() |> 
-  add_recipe(classification_recipe) |> 
-  add_model(forest_model) |> 
-  fit(compmus2025_filtered) |> 
-  pluck("fit", "fit", "fit") |>
-  ranger::importance() |> 
-  enframe() |> 
-  mutate(name = fct_reorder(name, value)) |> 
-  ggplot(aes(name, value)) + 
-  geom_col() + 
-  coord_flip() +
-  theme_classic() +
-  labs(x = NULL, y = "Importance")
-```
-```{r}
-compmus2025_filtered |>
-  ggplot(aes(x = valence, y = arousal, colour = ai, size = tempo)) +
-  geom_point(alpha = 0.8) +
-  scale_color_viridis_d() +
-  labs(
-    x = "Valence",
-    y = "Arousal",
-    size = "Tempo",
-    colour = "AI"
-  )
-```
-
-***
-
-This graph is based on our class corpus. Each dot represents a song, purple = AI, yellow = non AI. The size of the dots are BPM. 
-
-What we can make out of this graph is that AI-generated songs form a bit of a cluster, whereas the non-AI songs show a wider range of moods. AI seems to follow established musical patterns, but might lack the emotional extremes often found in human-made music.
-
-
-### Tempograms week 11
-
-#### Tempogram Track 1
-
-```{r}
-"features/cecilia-b-1.json" |>
-    compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
-    ggplot(aes(x = time, y = bpm, fill = power)) +
-    geom_raster() +
-    scale_fill_viridis_c(guide = "none") +
-    labs(x = "Time (s)", y = "Tempo (BPM)") +
-    theme_light()
-```
-
-***
-This graph of my first track shows how the speed of the music changes over time. Most of the time, the tempo stays steady at around 200 BPM and 400 BPM, shown by the bright, straight lines. At the beginning and end, the lines look more wavy, which means the tempo is changing or the rhythm is less steady in those parts. This happened in this song because it has a small intro that gradually settles into a steady beat and a tempo shift near the end.
-
-#### Tempogram Track 2
-
-```{r}
-"features/cecilia-b-2.json" |>
-    compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
-    ggplot(aes(x = time, y = bpm, fill = power)) +
-    geom_raster() +
-    scale_fill_viridis_c(guide = "none") +
-    labs(x = "Time (s)", y = "Tempo (BPM)") +
-    theme_classic()
-```
-
-***
-This graph of my second track shows how the tempo changes over time. The bright lines staying in the same place mean the tempo is very steady, around 200 BPM, 400 BPM, and 600 BPM. This suggests the music has a strong, consistent beat without big changes, which is common in electronic or dance music, and my goal was to make a 'dance music' track. The beat stays the same throughout the track.
-
-### Novelty Function: Energy
-
-#### Energy Novelty Track 1
-
-```{r}
-"features/cecilia-b-1.json" |>
-    compmus_energy_novelty() |> 
-    ggplot(aes(t, novelty)) +
-    geom_line() +
+tempo_danceability_gg <- ggplot(df, aes(x = tempo, y = danceability, size = instrumentalness, color = instrumentalness)) +
+    geom_point(alpha = 0.6) + 
+    labs(title = "Tempo vs Danceability", 
+         x = "Tempo (BPM)", y = "Danceability", size = "Instrumentalness", color = "Instrumentalness") +
+    scale_color_viridis_c() +  
     theme_minimal() +
-    labs(x = "Time (s)", y = "Energy Novelty")
+    theme(plot.title = element_text(hjust = 0.5))
+
+ggplotly(tempo_danceability_gg)
+
 ```
 
-***
-As you can see, this track doesn't have a lot of energy whatsoever. This track contains chill, relaxing ukulele music so 'low energy' was also my goal. It is kind of boring and as you can see, there's no energy to be found!
+### Explanation Tempo vs. Danceability
 
-#### Energy Novelty Track 2
+I’ve looked at all the different features and found especially the tempo and danceability interesting to look at. These are also features where I focused on in my second track. As you can see in the interactive graph, you have tracks with 60 BPM with a high danceability, but also tracks with a BPM of over 150 and a very low danceability. I presumed beforehand that the tracks with a low BPM were not as danceable as the ones with a higher one, so I found this very interesting.
+
+Chroma features
+===================================== 
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+### Explanation of the graphs
+
+**Explanation chromagram:**
+
+Track 1: This chromagram visualizes the pitch class distribution over time for my first track. The x-axis represents time in seconds, while the y-axis corresponds to the 12 pitch classes (C to B), including enharmonic equivalents. The color intensity indicates the strength of each pitch class at a given moment, with brighter areas representing stronger presence. This visualization helps analyze harmonic content, tonality, and key changes throughout the track.
+
+As you can see, the C is the most bright throughout the whole piece. This is correct because the track is also in C. There are also brighter lines at the F, because the chords do change. 
+
+
+Track 2: This chromagram represents the pitch class distribution over time for my second track. The x-axis shows time in seconds, while the y-axis corresponds to the 12 pitch classes (C to B), including enharmonic equivalents. 
+
+Compared to the first track, the chromagram is way more difficult to follow. There isn't a very obvious pattern to be found. This makes sense when you listen to the track.
+
+**Explanation keygram**
+
+Track 1: The keygram for Track 1 shows strong presence in C Major, F Major, C Minor, and F Minor, with darker blocks indicating frequent usage of these keys throughout the piece. Interestingly, the visualization does not strongly differentiate between major and minor modes, suggesting that the track may blend elements of both.
+
+Track 2: Just like with the chromagram above, it is difficult to find patterns in the keyf=gram of the second track. There isn't a real 'main key' in the piece.
+
+**Explanation chordogram:**
+
+Track 1: In the chordogram of track 1, you can see that specific chords were played throughout the entire song. F- and C major are the most obvious ones. This track also contains a ukulele playing the chords, so the chordogram looks pretty logic to me.
+
+Track 2: So if you compare this chordogram to the first one, you can see that there are less chords. The colors aren't as clear and not as long as the blocks in track 1. When listening to the track this makes sense, because I can't really hear many chords whatsoever.
+
+**Explanation chroma-based self-similarity matrices**
+
+Track 1: This chroma-based self-similarity matrix (SSM) visualizes the harmonic structure of my first track, showing how different moments in the piece relate to each other tonally. The x-axis and y-axis both represent time, meaning each point compares the harmonic content at one moment with another. The diagonal line from top-left to bottom-right represents perfect self-similarity, while the surrounding patterns reveal structural insights.
+
+The light pink areas indicate strong harmonic similarity, suggesting recurring chord progressions or key centers, while the purple areas highlight contrasting sections. The presence of horizontal and vertical bands suggests repeated sections. The dense grid-like pattern indicates frequent harmonic repetitions and variations, which could mean modulations or dynamic harmonic movement throughout the piece. Some larger blocks of similar color reveal harmonically stable sections where the key or chord progression remains consistent.
+
+Track 2: In this visualization, the overall texture appears dense, with many fine patterns throughout. The presence of the light pink regions indicates recurring harmonic material, while the purple areas suggest more variation. The repeated horizontal and vertical structures suggest that motifs or harmonic progressions return frequently throughout the piece. The less defined large-scale blocks compared to Track 1 could indicate a more continuous harmonic flow rather than strictly separated sections. Additionally, the mix of rigid and scattered patterns hints at a blend of structured repetition and gradual harmonic shifts.
+
+Column {.tabset}
+-----------------------------------------------------------------------
+### Chromagram Track 1
 
 ```{r}
-"features/cecilia-b-2.json" |>
-    compmus_energy_novelty() |> 
-    ggplot(aes(t, novelty)) +
-    geom_line() +
-    theme_minimal() +
-    labs(x = "Time (s)", y = "Energy Novelty")
+"features/cecilia-b-1.json" |>                           
+          compmus_chroma(norm = "identity") |>                 
+          ggplot(aes(x = time, y = pc, fill = value)) + 
+          geom_raster() +
+          scale_y_continuous(
+                  breaks = 0:11,
+                  minor_breaks = NULL,
+                  labels = c(
+                          "C", "C#|Db", "D", "D#|Eb",
+                          "E", "F", "F#|Gb", "G",
+                          "G#|Ab", "A", "A#|Bb", "B"
+                      )
+              ) +
+          scale_fill_viridis_c(guide = "none") +               
+          labs(x = "Time (s)", y = NULL, fill = NULL) +
+          theme_light() 
 ```
 
-***
-My second track is a bit more energetic compared to my first one, but less than I imagined. You can clearly see the 'beat-drop' 20 seconds into the track, but afterwards there is also hardly any energy in this track
-
-### Novelty function: spectral
-
-#### Spectral Novelty Track 1
+### Chromagram Track 2
 
 ```{r}
-"features/cecilia-b-1.json" |>
-    compmus_spectral_novelty() |> 
-    ggplot(aes(t, novelty)) +
-    geom_line() +
-    theme_minimal() +
-    labs(x = "Time (s)", y = "Spectral Novelty")
+"features/cecilia-b-2.json" |>                           
+          compmus_chroma(norm = "identity") |>                 
+          ggplot(aes(x = time, y = pc, fill = value)) + 
+          geom_raster() +
+          scale_y_continuous(
+                  breaks = 0:11,
+                  minor_breaks = NULL,
+                  labels = c(
+                          "C", "C#|Db", "D", "D#|Eb",
+                          "E", "F", "F#|Gb", "G",
+                          "G#|Ab", "A", "A#|Bb", "B"
+                      )
+              ) +
+          scale_fill_viridis_c(guide = "none") +               
+          labs(x = "Time (s)", y = NULL, fill = NULL) +
+          theme_light() 
 ```
 
-***
-If you look at this graph of my first track, you can see that it's almost completely the same during the whole song. 
-
-#### Spectral Novelty Track 2
-
-```{r}
-"features/cecilia-b-2.json" |>
-    compmus_spectral_novelty() |> 
-    ggplot(aes(t, novelty)) +
-    geom_line() +
-    theme_minimal() +
-    labs(x = "Time (s)", y = "Spectral Novelty")
-```
-
-***
-Here you can see the beat drop that happens around 20 seconds into the track. There is an enormous shift in the graph, and after 50 seconds or so it calms down again.
-
-### Chordogram week 10
-
-#### Chordogram Track 1
+### Keygram Track 1
 
 ```{r}
 #      C     C#    D     Eb    E     F     F#    G     Ab    A     Bb    B
@@ -410,6 +318,123 @@ key_templates <-
   )
 ```
 
+```{r}
+"features/cecilia-b-1.json" |> 
+  compmus_chroma(norm = "identity") |> 
+  compmus_match_pitch_templates(
+    key_templates,         
+    norm = "identity",       
+    distance = "cosine"   
+  ) |>
+  ggplot(aes(x = time, y = name, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               
+  labs(x = "Time (s)", y = "Template", fill = NULL) +
+  theme_classic()   
+```
+
+### Keygram Track 2
+
+```{r}
+"features/cecilia-b-2.json" |> 
+  compmus_chroma(norm = "identity") |> 
+  compmus_match_pitch_templates(
+    key_templates,         
+    norm = "identity",       
+    distance = "cosine"   
+  ) |>
+  ggplot(aes(x = time, y = name, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               
+  labs(x = "Time (s)", y = "Template", fill = NULL) +
+  theme_classic()   
+```
+
+### Chordogram Track 1
+
+```{r}
+#      C     C#    D     Eb    E     F     F#    G     Ab    A     Bb    B
+major_chord <-
+  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    0,    0)
+minor_chord <-
+  c(   1,    0,    0,    1,    0,    0,    0,    1,    0,    0,    0,    0)
+seventh_chord <-
+  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    1,    0)
+
+major_key <-
+  c(6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88)
+minor_key <-
+  c(6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17)
+
+chord_templates <-
+  tribble(
+    ~name, ~template,
+    "Gb:7", circshift(seventh_chord, 6),
+    "Gb:maj", circshift(major_chord, 6),
+    "Bb:min", circshift(minor_chord, 10),
+    "Db:maj", circshift(major_chord, 1),
+    "F:min", circshift(minor_chord, 5),
+    "Ab:7", circshift(seventh_chord, 8),
+    "Ab:maj", circshift(major_chord, 8),
+    "C:min", circshift(minor_chord, 0),
+    "Eb:7", circshift(seventh_chord, 3),
+    "Eb:maj", circshift(major_chord, 3),
+    "G:min", circshift(minor_chord, 7),
+    "Bb:7", circshift(seventh_chord, 10),
+    "Bb:maj", circshift(major_chord, 10),
+    "D:min", circshift(minor_chord, 2),
+    "F:7", circshift(seventh_chord, 5),
+    "F:maj", circshift(major_chord, 5),
+    "A:min", circshift(minor_chord, 9),
+    "C:7", circshift(seventh_chord, 0),
+    "C:maj", circshift(major_chord, 0),
+    "E:min", circshift(minor_chord, 4),
+    "G:7", circshift(seventh_chord, 7),
+    "G:maj", circshift(major_chord, 7),
+    "B:min", circshift(minor_chord, 11),
+    "D:7", circshift(seventh_chord, 2),
+    "D:maj", circshift(major_chord, 2),
+    "F#:min", circshift(minor_chord, 6),
+    "A:7", circshift(seventh_chord, 9),
+    "A:maj", circshift(major_chord, 9),
+    "C#:min", circshift(minor_chord, 1),
+    "E:7", circshift(seventh_chord, 4),
+    "E:maj", circshift(major_chord, 4),
+    "G#:min", circshift(minor_chord, 8),
+    "B:7", circshift(seventh_chord, 11),
+    "B:maj", circshift(major_chord, 11),
+    "D#:min", circshift(minor_chord, 3)
+  )
+
+key_templates <-
+  tribble(
+    ~name, ~template,
+    "Gb:maj", circshift(major_key, 6),
+    "Bb:min", circshift(minor_key, 10),
+    "Db:maj", circshift(major_key, 1),
+    "F:min", circshift(minor_key, 5),
+    "Ab:maj", circshift(major_key, 8),
+    "C:min", circshift(minor_key, 0),
+    "Eb:maj", circshift(major_key, 3),
+    "G:min", circshift(minor_key, 7),
+    "Bb:maj", circshift(major_key, 10),
+    "D:min", circshift(minor_key, 2),
+    "F:maj", circshift(major_key, 5),
+    "A:min", circshift(minor_key, 9),
+    "C:maj", circshift(major_key, 0),
+    "E:min", circshift(minor_key, 4),
+    "G:maj", circshift(major_key, 7),
+    "B:min", circshift(minor_key, 11),
+    "D:maj", circshift(major_key, 2),
+    "F#:min", circshift(minor_key, 6),
+    "A:maj", circshift(major_key, 9),
+    "C#:min", circshift(minor_key, 1),
+    "E:maj", circshift(major_key, 4),
+    "G#:min", circshift(minor_key, 8),
+    "B:maj", circshift(major_key, 11),
+    "D#:min", circshift(minor_key, 3)
+  )
+```
 
 ```{r}
 "features/cecilia-b-1.json" |> 
@@ -426,11 +451,7 @@ key_templates <-
   theme_classic()  
 ```
 
-***
-
-In this chordogram, you can see that specific chords were played throughout the entire song. F- and C major are the most obvious ones. This track also contains a ukulele playing the chords, so the chordogram looks pretty logic to me.
-
-#### Chordogram Track 2
+### Chordogram Track 2
 
 ```{r}
 #      C     C#    D     Eb    E     F     F#    G     Ab    A     Bb    B
@@ -516,7 +537,6 @@ key_templates <-
   )
 ```
 
-
 ```{r}
 "features/cecilia-b-2.json" |> 
   compmus_chroma(norm = "manhattan") |> 
@@ -532,123 +552,7 @@ key_templates <-
   theme_classic()  
 ```
 
-***
-
-So if you compare this chordogram to the first one, you can see that there are less chords. The colors aren't as clear and not as long as the blocks in track 1. When listening to the track this makes sense, because I can't really hear many chords whatsoever.
-
-Oh and if you read this and know how I can put my texts next to the graphs in stead of under them: please send me a message or add it to the comments! Very much appreciated :)
-
-### Chromagram Analysis
-
-#### Chromagram Track 1
-
-```{r}
-"features/cecilia-b-1.json" |>                           
-          compmus_chroma(norm = "identity") |>                 
-          ggplot(aes(x = time, y = pc, fill = value)) + 
-          geom_raster() +
-          scale_y_continuous(
-                  breaks = 0:11,
-                  minor_breaks = NULL,
-                  labels = c(
-                          "C", "C#|Db", "D", "D#|Eb",
-                          "E", "F", "F#|Gb", "G",
-                          "G#|Ab", "A", "A#|Bb", "B"
-                      )
-              ) +
-          scale_fill_viridis_c(guide = "none") +               
-          labs(x = "Time (s)", y = NULL, fill = NULL) +
-          theme_light() 
-```
-
-***
-
-Figure: Chromagram of Cecilia B-1
-
-This chromagram visualizes the pitch class distribution over time for my first track. The x-axis represents time in seconds, while the y-axis corresponds to the 12 pitch classes (C to B), including enharmonic equivalents (e.g., C#|Db). The color intensity indicates the strength of each pitch class at a given moment, with brighter areas representing stronger presence. This visualization helps analyze harmonic content, tonality, and key changes throughout the track.
-
-(I still want to analyze it further but ran out of time for now)
-
-#### Chromagram Track 2
-
-```{r}
-"features/cecilia-b-2.json" |>                           
-          compmus_chroma(norm = "identity") |>                 
-          ggplot(aes(x = time, y = pc, fill = value)) + 
-          geom_raster() +
-          scale_y_continuous(
-                  breaks = 0:11,
-                  minor_breaks = NULL,
-                  labels = c(
-                          "C", "C#|Db", "D", "D#|Eb",
-                          "E", "F", "F#|Gb", "G",
-                          "G#|Ab", "A", "A#|Bb", "B"
-                      )
-              ) +
-          scale_fill_viridis_c(guide = "none") +               
-          labs(x = "Time (s)", y = NULL, fill = NULL) +
-          theme_light() 
-```
-
-***
-
-Figure: Chromagram of Cecilia B-2
-
-This chromagram represents the pitch class distribution over time for my second track. The x-axis shows time in seconds, while the y-axis corresponds to the 12 pitch classes (C to B), including enharmonic equivalents. 
-
-(I still want to analyze it further, and compare both chromagrams but ran out of time for now)
-
-### Cepstrogram Analysis
-
-#### Cepstrogram Track 1
-
-```{r}
-"features/cecilia-b-1.json" |>                           
-    compmus_mfccs(norm = "identity") |>                  
-    ggplot(aes(x = time, y = mfcc, fill = value)) + 
-    geom_raster() +
-    scale_y_continuous(
-        breaks = 0:12,
-        minor_breaks = NULL,
-    ) +
-    scale_fill_viridis_c(option = "plasma", guide = "none") +
-    labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
-    theme_light() 
-```
-
-***
-
-Figure: Cepstrogram of Cecilia B-1
-
-This cepstrogram visualizes the evolution of Mel-Frequency Cepstral Coefficients (MFCCs) over time for my first track. The x-axis represents time in seconds, while the y-axis indicates the MFCC coefficient number, which captures different aspects of the spectral envelope. The color intensity (using the plasma color scale) shows the strength of each coefficient at a given moment, with brighter colors representing higher magnitudes. MFCCs are commonly used for timbre analysis, making this plot useful for understanding tonal quality, texture, and distinguishing different sound characteristics within the track.
-
-#### Cepstrogram Track 2
-
-```{r}
-"features/cecilia-b-2.json" |>                           
-    compmus_mfccs(norm = "identity") |>                  
-    ggplot(aes(x = time, y = mfcc, fill = value)) + 
-    geom_raster() +
-    scale_y_continuous(
-        breaks = 0:12,
-        minor_breaks = NULL,
-    ) +
-    scale_fill_viridis_c(option = "plasma", guide = "none") +
-    labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
-    theme_light() 
-```
-
-***
-
-Figure: Cepstrogram of Cecilia B-2
-
-This cepstrogram displays the progression of Mel-Frequency Cepstral Coefficients (MFCCs) over time for my second track.
-
-(I still want to analyze it further, and compare both cepstrograms but ran out of time for now)
-
-### Self-similarity Matrices Track 1
-
-#### Chroma-based self-similarity matrix track 1
+### Chroma-based self-similarity matrix: Track 1
 
 ```{r}
 "features/cecilia-b-1.json" |>                           
@@ -664,33 +568,7 @@ This cepstrogram displays the progression of Mel-Frequency Cepstral Coefficients
      theme_light() 
 ```
 
-***
-
-This visualization helps analyze harmonic consistency and motif recurrence within the track.
-
-#### Timbre-based self-similarity matrix track 1
-
-```{r}
-"features/cecilia-b-1.json" |>                           
-     compmus_mfccs(norm = "identity") |>                  
-     compmus_self_similarity(
-         feature = mfcc,
-         distance = "euclidean"                             
-     ) |>   
-     ggplot(aes(x = xtime, y = ytime, fill = d)) + 
-     geom_raster() +
-     scale_fill_gradient(low = "#FF69B4", high = "#FFD700") +               
-     labs(x = "Time (s)", y = NULL, fill = NULL) +
-     theme_light()
-```
-
-*** 
-
-This timbre-based self-similarity matrix (SSM) uses Mel-Frequency Cepstral Coefficients (MFCCs) to measure the similarity in timbre across different points in my first track. The x- and y-axes represent time, while the color gradient illustrates the degree of similarity—brighter regions indicate similar timbral qualities between different sections. Unlike the chroma-based matrix, this SSM captures changes in texture, instrumentation, and dynamics, making it useful for identifying shifts in sound color rather than harmonic structure.
-
-### Self-similarity Matrices Track 2
-
-#### Chroma-based self-similarity matrix track 2
+### Chroma-based self-similarity matrix: Track 2
 
 ```{r}
 "features/cecilia-b-2.json" |>                           
@@ -706,69 +584,342 @@ This timbre-based self-similarity matrix (SSM) uses Mel-Frequency Cepstral Coeff
      theme_light() 
 ```
 
-#### Timbre-based self-similarity matrix track 2
+Loudness
+===================================== 
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+### Explanation of the graphs
+
+**Energy Novelty:**
+
+Energy novelty functions measure changes in a song’s loudness or dynamics. Peaks represent drops, breakdowns, or sudden boosts in energy. 
+
+Track 1: As you can see, this track doesn't have a lot of energy whatsoever. This track contains chill, relaxing ukulele music so 'low energy' was also my goal. It is kind of boring and as you can see, there's no energy to be found!
+
+Track 2: My second track is a bit more energetic compared to my first one, but less than I imagined. You can clearly see the 'beat-drop' 20 seconds into the track, but afterwards there is also hardly any energy in this track
+
+**Spectral Novelty:**
+
+Spectral novelty tracks how the timbre and frequency content of a song change over time. Peaks represent shifts in instrumentation, texture, or pitch content. These show transitions, build-ups, or new layers.
+
+Track 1: If you look at this graph of my first track, you can see that it's almost completely the same during the whole song. It does have a couple of little peaks. You can see that there's a lot of repetition in this track.
+
+Track 2: In this track, spectral novelty fluctuates throughout, with higher peaks indicating points of strong change, likely representing the introduction of new sounds, chord changes, or dynamic shifts. The first half of the piece shows more pronounced spectral variation, suggesting an active and evolving section. In contrast, the middle portion appears more stable, with lower novelty values, which could indicate a sustained passage with fewer abrupt changes. Towards the end, spectral novelty rises again, hinting at increased activity or a climactic section before the piece concludes.
+
+Column {.tabset}
+-----------------------------------------------------------------------
+### Energy Novelty Track 1
 
 ```{r}
-"features/cecilia-b-2.json" |>                           
-     compmus_mfccs(norm = "identity") |>                  
-     compmus_self_similarity(
-         feature = mfcc,
-         distance = "euclidean"                             
-     ) |>   
-     ggplot(aes(x = xtime, y = ytime, fill = d)) + 
-     geom_raster() +
-     scale_fill_gradient(low = "#FF69B4", high = "#FFD700") +               
-     labs(x = "Time (s)", y = NULL, fill = NULL) +
-     theme_light()
-```
-
-### Introduction
-
-```{r}
-```
-
-***
-
-Hello everyone, and welcome to my Portfolio page! This is the first time coding for me, and I've been sick all week and missing both the lecture and the workgroup, so I think I know what I'm doing, but not entirely sure... Feedback is very welcome :) 
-
-For the homework assignment of last week I had to create two tracks. I made them through a generative AI program called 'Stable Audio'. I wanted to make two completely different tracks.
-
-Track 1: for this track I wanted to go for a relaxing vibe. I used the prompts ukulele, beach vibes, relax, 80 BPM, high-hat, danceable, cool, build-up and ukulele solo. The result was kind of what I expected: relaxing, summer vibes with a piña colada, lying down on the beach on holiday. The tempo is kind of slow, there are many consonant harmonies, gentle strumming patterns and it's quite minimalistic.
-
-Track 2: this track is a bit more outgoing than the first one. I wanted to make a tune that you'll hear in the club and dance to. Therefor I used the prompts techno club, classical violin, piano chords, cool, groovy, 100 BPM, danceable, high-hat, build-up and heavy beatdrop. As you can see I also used classical music prompts. I like to experiment with 'modern' genres and classical music because I think they make an excellent combination. On this one I think the danceability, energy and instrumentalness pop out the most.
-
-### Visualization week 9
-
-```{r}
- library(ggplot2)
-library(plotly)
-
-data <- read.csv("aisc2024.csv")
-
-tempo_danceability_gg <- ggplot(data, aes(x = tempo, y = danceability, size = instrumentalness, color = instrumentalness)) +
-    geom_point(alpha = 0.6) + 
-    labs(title = "Tempo vs Danceability", 
-         x = "Tempo (BPM)", y = "Danceability", size = "Instrumentalness", color = "Instrumentalness") +
-    scale_color_viridis_c() +  
+"features/cecilia-b-1.json" |>
+    compmus_energy_novelty() |> 
+    ggplot(aes(t, novelty)) +
+    geom_line() +
     theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5))
+    labs(x = "Time (s)", y = "Energy Novelty")
+```
 
-ggplotly(tempo_danceability_gg)
+### Energy Novelty Track 2
 
+```{r}
+"features/cecilia-b-2.json" |>
+    compmus_energy_novelty() |> 
+    ggplot(aes(t, novelty)) +
+    geom_line() +
+    theme_minimal() +
+    labs(x = "Time (s)", y = "Energy Novelty")
+```
+
+### Spectral Novelty Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>
+    compmus_spectral_novelty() |> 
+    ggplot(aes(t, novelty)) +
+    geom_line() +
+    theme_minimal() +
+    labs(x = "Time (s)", y = "Spectral Novelty")
+```
+
+### Spectral Novelty Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>
+    compmus_spectral_novelty() |> 
+    ggplot(aes(t, novelty)) +
+    geom_line() +
+    theme_minimal() +
+    labs(x = "Time (s)", y = "Spectral Novelty")
+```
+
+Timbre features
+===================================== 
+Column {data-width=500}
+-----------------------------------------------------------------------
+### Explanation of the graphs
+
+**Explanation cepstogram:**
+
+Track 1: In this visualization, the lower coefficients (near 0 and 1) show the most variation, with distinct yellow and purple bands. This suggests that fundamental frequency and overall spectral shape contribute significantly to the track's timbre. Higher coefficients remain relatively stable, meaning that finer spectral details do not change drastically over time. The consistent orange hue across most of the plot implies a relatively steady harmonic structure throughout the piece, while any visible variations may indicate section changes, shifts in instrumentation, or dynamic contrasts.
+
+Track 2: This cepstogram shows a relatively stable spectral envelope, with strong activity in the lower coefficients (0 and 1), seen in the bright yellow and purple bands. The mid and higher coefficients remain largely uniform, suggesting a consistent timbre throughout the track. Some minor variations occur, but overall, the spectral structure remains steady over time.
+
+Comparing this to the previous cepstogram, both exhibit a similar distribution, but the first one showed slightly more variation in the lower coefficients, indicating more dynamic changes in harmonic content. This second cepstogram appears smoother, suggesting a more stable timbral texture.
+
+
+**Explanation timbre-based self-similarity matrices:**
+
+A self-similarity matrix compares every moment of a song with every other moment. The x and y axes both represent time. The color shows how similar two moments are: darker is more similar, lighter is less similar. This helps to reveal the structure of a song: repetitions show up as diagonal lines, and breaks or transitions appear as shifts in the pattern. This self-similarity is based on chroma, which means it can find harmonic/melodic structure.
+
+Track 1: As you can see in the graph, there is a block structures. The block structure suggests sections where timbre remains similar for an extended time. It has very clear rectangular patterns. It kind of looks like a loop.
+
+Track 2: The second track has a kind of similar timbre-based self-similarity matrix compared to my first track, but it has way more diagonal lines in it which indicates repeating patterns. The colors are also a bit darker sometimes. Timbre is related to the tone quality of the sound. If two sections have very different timbres, the similarity score will be lower, resulting in darker colors in the matrix.
+
+Column {.tabset}
+-----------------------------------------------------------------------
+### Cepstogram Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>                           
+    compmus_mfccs(norm = "identity") |>                  
+    ggplot(aes(x = time, y = mfcc, fill = value)) + 
+    geom_raster() +
+    scale_y_continuous(
+        breaks = 0:12,
+        minor_breaks = NULL,
+    ) +
+    scale_fill_viridis_c(option = "plasma", guide = "none") +
+    labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+    theme_light() 
+```
+
+### Cepstogram Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>                           
+    compmus_mfccs(norm = "identity") |>                  
+    ggplot(aes(x = time, y = mfcc, fill = value)) + 
+    geom_raster() +
+    scale_y_continuous(
+        breaks = 0:12,
+        minor_breaks = NULL,
+    ) +
+    scale_fill_viridis_c(option = "plasma", guide = "none") +
+    labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+    theme_light() 
+```
+
+### Timbre-based self-similarity matrix Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>                           
+     compmus_mfccs(norm = "identity") |>                  
+     compmus_self_similarity(
+         feature = mfcc,
+         distance = "euclidean"                             
+     ) |>   
+     ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+     geom_raster() +
+     scale_fill_gradient(low = "#FF69B4", high = "#FFD700") +               
+     labs(x = "Time (s)", y = NULL, fill = NULL) +
+     theme_light()
+```
+
+### Timbre-based self-similarity matrix Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>                           
+     compmus_mfccs(norm = "identity") |>                  
+     compmus_self_similarity(
+         feature = mfcc,
+         distance = "euclidean"                             
+     ) |>   
+     ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+     geom_raster() +
+     scale_fill_gradient(low = "#FF69B4", high = "#FFD700") +               
+     labs(x = "Time (s)", y = NULL, fill = NULL) +
+     theme_light()
 ```
 
 
-***
+Temporal features
+===================================== 
 
-For this week, we were supposed to use the "compmus2025.csv" file to explore them, but I didn't manage to get the file working: it kept saying that the whole document was one column, so I couldn't examine all the separate musical characteristics. 
+Column {data-width=500}
+-----------------------------------------------------------------------
+### Explanation of the graphs
 
-Ashley said it was also okay to use the "aisc2024.csv" file this week, so that's what I've done. I've looked at all the different features and found especially the tempo and danceability interesting to look at. These are also features where I focused on in my second track. As you can see in the interactive(!) graph, you have tracks with 60 BPM with a high danceability, but also tracks with a BPM of over 150 and a very low danceability. I presumed beforehand that the tracks with a low BPM were not as danceable as the ones with a higher one, so I found this very interesting. 
+**Explanation tempogram**
+
+Track 1: In the tempogram of this track, you can see two distinct phases in terms of tempo.
+
+First Phase (30 seconds): The first 30 seconds show rapid fluctuations in tempo, with the graph shifting between 550 BPM, 400 BPM, 200 BPM, and 100 BPM. This indicates that the piece has dynamic tempo changes, with the speed varying quite a bit during this initial section. These fluctuations may suggest changes in intensity or rhythmic patterns, possibly representing moments of transition or varying musical sections that shift in speed.
+
+Second Phase (the rest of the piece): After this initial 30-second section, the tempo becomes more stable. The graph then shows straight lines at 500 BPM, 300 BPM, and 150 BPM, indicating a steady tempo throughout the rest of the piece. The tempo here is more consistent, with less fluctuation, suggesting that the music has settled into a regular rhythm or groove. Each line represents a distinct tempo at which the music is played, allowing for easier identification of the different sections of the song.
+
+This shift from fluctuating tempos to a steady rhythm could indicate a structural change in the piece—perhaps moving from a more energetic, varied introduction to a more stable, consistent rhythm in the later sections.
 
 
-### Discussion
+Track 2: In the tempogram of this track, the tempo remains relatively consistent throughout the entire piece. The graph shows straight lines at 100 BPM, 200 BPM, 300 BPM, 400 BPM, 500 BPM, and 600 BPM, indicating that these are the primary tempos at which the music is played.
 
-***
+The consistent presence of these tempo lines suggests that the piece maintains a steady rhythm throughout, with the tempo fluctuating between these different speeds. This could mean that the track shifts through various sections that each have a specific tempo, but the changes are smooth and gradual rather than abrupt.
 
-As I said in the visualization, I couldn't use the new file with the Essentia features, so I couldn't see if Essentia characterized my tracks correctly. I hope that it will work next week and I can analyze my own tracks! :)
+The presence of multiple distinct tempo values could point to different sections of the music, each with its own tempo, but the piece avoids sudden or dramatic shifts. These gradual transitions might reflect a more structured or intentional variation in tempo, giving the piece a sense of flow and continuity.
 
+The variety of tempos indicates that the piece still has rhythmic complexity, but the changes are less dramatic than in the first track. This could suggest that the music may go through different phases or sections with varying intensities, but always within a controlled range of tempos.
+
+Overall, the tempogram for this track reflects a steady, evolving rhythm, with clear distinctions between different sections based on tempo changes, but without drastic or erratic fluctuations.
+
+Column {.tabset}
+-----------------------------------------------------------------------
+### Tempogram Track 1
+
+```{r}
+"features/cecilia-b-1.json" |>
+    compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+    ggplot(aes(x = time, y = bpm, fill = power)) +
+    geom_raster() +
+    scale_fill_viridis_c(guide = "none") +
+    labs(x = "Time (s)", y = "Tempo (BPM)") +
+    theme_light()
+```
+
+### Tempogram Track 2
+
+```{r}
+"features/cecilia-b-2.json" |>
+    compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+    ggplot(aes(x = time, y = bpm, fill = power)) +
+    geom_raster() +
+    scale_fill_viridis_c(guide = "none") +
+    labs(x = "Time (s)", y = "Tempo (BPM)") +
+    theme_classic()
+```
+
+
+Clustering
+===================================== 
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+### Explanation of the graphs
+**Dendrogram:**
+The dendrogram is a visualization of how 10 songs are grouped based on their tempo, danceability, and arousal. Here’s what we can learn from the graph:
+
+The first two songs (aleksandra-b-1 & berend-b-2) are clustered together at a reasonably low height, which means they are very similar in terms of their tempo, danceability, and arousal.
+The low height shows that they have almost the same characteristics, which might mean they have similar energy levels, rhythms, and overall vibe.
+
+The low height at which the last two songs (aleksandra-b-2 & bram-d-1) connect indicates that they have very similar features—likely close in terms of tempo, danceability, and arousal. Although they belong to the larger group, their close connection suggests they share a distinctive similarity within this group.
+
+The remaining songs form a bigger group. These songs are somewhat similar, but not as much as Songs 9 & 10, and the connections between them vary in height. Some songs in this group are more similar to each other, while others are more different, forming a looser cluster.
+
+The group shows diversity in tempo, danceability, and arousal but still indicates a shared vibe between most of them.
+
+The first two songs are connected to the rest with a high vertical line. This shows that they are quite different from the other 8 songs. They have unique characteristics that set them apart, making them stand out in the dendrogram.
+
+**Analyzing the last three songs:**
+In this analysis, we will focus on the last three songs in our dendrogram: Aleksandra-b-2, Angelo-w-1, and Bram-d-1. These three songs form a small, tight cluster, indicating that they are the most similar in terms of their musical characteristics.
+
+Characteristics Breakdown:
+Arousal:
+
+- Aleksandra-b-2: 3.68
+- Angelo-w-1: 3.62
+- Bram-d-1: 4.10
+
+All three songs have relatively similar arousal values, though Bram-d-1 has the highest arousal (4.10), making it slightly more energetic than the other two. The difference in arousal between these three songs is not large, so this suggests they all have a comparable level of energy.
+
+Danceability:
+
+- Aleksandra-b-2: 0.69
+- Angelo-w-1: 0.71
+- Bram-d-1: 0.72
+
+In terms of danceability, all three songs have similar scores, with Bram-d-1 again being the highest (0.72), followed by Angelo-w-1 (0.71) and Aleksandra-b-2 (0.69). These values indicate that all three songs have a relatively moderate level of danceability, making them all easy to move to, but not extremely fast-paced or slow.
+
+Tempo:
+
+- Aleksandra-b-2: 104 BPM
+- Angelo-w-1: 140 BPM
+- Bram-d-1: 110 BPM
+
+The tempo values show a bit more variation between these songs. Angelo-w-1 has a significantly faster tempo (140 BPM), making it more energetic and faster-paced compared to the other two. Bram-d-1 and Aleksandra-b-2 have similar tempos (110 BPM and 104 BPM, respectively), which are more moderate compared to Angelo-w-1, suggesting a slightly more relaxed pace for these two.
+
+Cluster Analysis:
+Angelo-w-1 and Bram-d-1 have the smallest cluster, meaning they are the most similar to each other compared to the other songs.
+
+Aleksandra-b-2 joins this small cluster, indicating that it also shares many similarities with Angelo-w-1 and Bram-d-1, but it has slightly lower energy (arousal) and lower danceability compared to Angelo-w-1 and Bram-d-1.
+
+Conclusion:
+These three songs form a close-knit cluster based on their similar energy levels, danceability, and moderate tempo. While Angelo-w-1 is a bit faster and more energetic than Aleksandra-b-2 and Bram-d-1, the overall similarities in their characteristics suggest that they share a similar vibe and could be grouped together as having a moderate to high level of energy with danceable rhythms.
+
+
+Column {.tabset}
+-----------------------------------------------------------------------
+### Dendrogram: Tempo, arousal, and danceability: How songs cluster together
+
+```{r}
+df_selected_10 <- df[1:10, ]
+
+cluster_juice <-
+  recipe(
+    filename ~
+      arousal +
+      danceability +
+      tempo,
+    data = df_selected_10  
+  ) |>
+  step_center(all_predictors()) |>
+  step_scale(all_predictors()) |> 
+  prep(df_selected_10) |>
+  juice() |>
+  column_to_rownames("filename")  
+
+df_dist <- dist(cluster_juice, method = "euclidean")
+
+df_dist |> 
+  hclust(method = "average") |>
+  dendro_data() |> 
+  ggdendrogram() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 12))
+```
+
+### The last three songs
+
+```{r}
+selected_songs_3 <- df[df$filename %in% c("angelo-w-1", "aleksandra-b-2", "bram-d-1"), ]
+
+print(selected_songs_3)
+```
+```{r}
+library(DT)
+
+selected_songs_3 <- df[df$filename %in% c("angelo-w-1", "aleksandra-b-2", "bram-d-1"), ]
+
+DT::renderDataTable({
+  selected_songs_3
+}, options = list(pageLength = 5, autoWidth = TRUE))
+```
+
+Contribution
+===================================== 
+
+**What have I learned?**
+
+Looking back on the analysis of my two AI-generated songs, it was really fun to see how they held up when compared to the rest of the class corpus. Analyzing my own music, especially with all these tools, was an exciting experience. it was fun to break it down and understand it in such detail. I could see how different elements like rhythm, timbre, and energy worked together, and how they influenced things like danceability.
+
+It was also really interesting to compare my tracks with the songs from the class. Seeing how they matched up or differed made me realize how much little things like changes in rhythm or texture can affect the overall feel of a song. It was a great way to learn more about my own compositions and also to appreciate the complexity of music that comes from other people.
+
+Overall, being able to experiment with my own music and then learn from the comparison with others was a valuable experience. It really opened up new ways of thinking about music creation, and I enjoyed the whole process of exploring it in depth.
+
+**Who could these conclusions benefit?**
+
+These insights are not just useful for me, but could help a wide range of people. Music researchers and musicologists, for example, can use these tools to study patterns across different genres and understand how elements of music come together.
+
+Composers and producers can use the analysis to see how energy and tempo change in a piece, helping them shape the music to have the right impact—whether creating tension or a smooth flow.
+
+Music information retrieval specialists can use the features to develop algorithms that identify patterns in music or even generate new pieces based on these patterns, providing a data-driven way to understand music.
+
+For educators and students, the tools offer a nice way to explore music theory, making abstract ideas like harmony and rhythm easier to understand and to visualize them through graphs.
 
